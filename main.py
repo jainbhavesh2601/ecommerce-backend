@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from src.product.routes import router as product_router
 from contextlib import asynccontextmanager
 from src.db.main import init_db
@@ -20,7 +21,6 @@ async def lifespan(app: FastAPI):
     await run_auto_migrations()
     yield
     print("🧹 Server is shutting down...")
-
 
 
 description = """
@@ -67,6 +67,20 @@ app = FastAPI(
         "onComplete": "Ok"
     },
     lifespan=lifespan
+)
+
+# ✅ Add CORS middleware (must come before routers)
+origins = [
+    "https://ecommerce-frontend-tan-five.vercel.app",  # your frontend URL
+    "http://localhost:3000",  # for local development
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Setup middleware
