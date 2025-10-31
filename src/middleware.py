@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 import time
 import logging
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -26,28 +27,22 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         
         return response
 
+
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Log all requests with timing information."""
     
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
-        
-        # Log request
         logger.info(f"Request: {request.method} {request.url}")
         
-        # Process request
         response = await call_next(request)
-        
-        # Calculate processing time
         process_time = time.time() - start_time
         
-        # Log response
         logger.info(f"Response: {response.status_code} - {process_time:.4f}s")
-        
-        # Add timing header
         response.headers["X-Process-Time"] = str(process_time)
         
         return response
+
 
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):
     """Global error handling middleware."""
@@ -61,7 +56,7 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             import traceback
             logger.error(f"Traceback: {traceback.format_exc()}")
             
-            # Create error response with CORS headers
+            # Return error response with CORS headers
             error_response = JSONResponse(
                 status_code=500,
                 content={
@@ -70,40 +65,48 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
                 }
             )
             
-            # Add CORS headers manually
-            error_response.headers["Access-Control-Allow-Origin"] = request.headers.get("Origin", "*")
+            # Add CORS headers manually (for failed requests)
+            origin = request.headers.get("Origin", "*")
+            error_response.headers["Access-Control-Allow-Origin"] = origin
             error_response.headers["Access-Control-Allow-Credentials"] = "true"
             error_response.headers["Access-Control-Allow-Methods"] = "*"
             error_response.headers["Access-Control-Allow-Headers"] = "*"
             
             return error_response
 
+
 def setup_middleware(app: FastAPI):
     """Setup all middleware for the FastAPI application."""
     
-    # CORS middleware
+    # ✅ CORS middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
-            "http://localhost:3000", 
+            "http://localhost:3000",
             "http://localhost:5173",
-            "http://localhost:5174",  # Added port 5174
-            "http://127.0.0.1:3000", 
+            "http://localhost:5174",
+            "http://127.0.0.1:3000",
             "http://127.0.0.1:5173",
-            "http://127.0.0.1:5174"   # Added port 5174
-        ],  # Add your frontend URLs
+            "http://127.0.0.1:5174",
+            "https://ecommerce-frontend-tan-five.vercel.app",  # ✅ Your Vercel frontend
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
-    # Trusted host middleware
+
+    # ✅ TrustedHost middleware — allow Render + localhost
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["localhost", "127.0.0.1", "*.yourdomain.com"]  # Add your domains
+        allowed_hosts=[
+            "localhost",
+            "127.0.0.1",
+            "ecommerce-backend-7jlj.onrender.com",  # ✅ Your Render backend
+            ".onrender.com",  # ✅ Any Render subdomain
+        ]
     )
-    
-    # Custom middleware (order matters - last added is first executed)
+
+    # ✅ Custom middleware (order matters)
     app.add_middleware(ErrorHandlingMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
