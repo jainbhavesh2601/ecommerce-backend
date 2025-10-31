@@ -1,0 +1,48 @@
+====================================================================
+EMAIL VERIFICATION - ENVIRONMENT VARIABLES SETUP
+====================================================================
+
+To enable email verification, add the following to your .env file:
+
+--------------------------------------------------------------------
+COPY THESE LINES TO YOUR .env FILE:
+--------------------------------------------------------------------
+
+# Email Configuration for Verification
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USERNAME=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password-here
+EMAIL_FROM=noreply@artisansalley.com
+EMAIL_USE_TLS=true
+
+# Frontend URL (for verification links in emails)
+FRONTEND_URL=http://localhost:5173
+
+--------------------------------------------------------------------
+
+IMPORTANT NOTES:
+
+1. For Gmail:
+   - Enable 2-Factor Authentication on your Google account
+   - Generate an App Password:
+     * Go to: https://myaccount.google.com/security
+     * Click "2-Step Verification" > "App passwords"
+     * Select "Mail" and "Other (Custom name)"
+     * Copy the 16-character password
+     * Use this as EMAIL_PASSWORD
+
+2. For Production:
+   - Use a professional email service (SendGrid, Mailgun, AWS SES)
+   - Don't use personal Gmail accounts
+   - Set FRONTEND_URL to your production domain
+
+3. Testing with Mailtrap (Development):
+   EMAIL_HOST=smtp.mailtrap.io
+   EMAIL_PORT=2525
+   EMAIL_USERNAME=your-mailtrap-username
+   EMAIL_PASSWORD=your-mailtrap-password
+   EMAIL_USE_TLS=true
+
+====================================================================
+
